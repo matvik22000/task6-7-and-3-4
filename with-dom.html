@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Динамическое вложенное меню</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        nav {
+            background: #f8f9fa;
+            padding: 1rem;
+            position: relative;
+        }
+        .menu-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+        }
+        .main-menu {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+        .menu-item {
+            position: relative;
+            cursor: pointer;
+        }
+        .menu-item a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+        /* Контейнер для динамического меню */
+        .dropdown-container {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            min-width: 250px;
+            display: none;
+            z-index: 100;
+        }
+        .dropdown-container ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .dropdown-container li {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .dropdown-container li:hover {
+            background: #f1f1f1;
+        }
+        /* Кнопка "Назад" для вложенных меню */
+        .back {
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            background: #eee;
+            border-bottom: 1px solid #ddd;
+        }
+        /* Mobile стили */
+        @media (max-width: 768px) {
+            .main-menu {
+                flex-direction: column;
+                display: none;
+                background: white;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+            .hamburger {
+                display: block;
+                cursor: pointer;
+                padding: 1rem;
+            }
+            .dropdown-container {
+                position: static;
+                box-shadow: none;
+            }
+        }
+        @media (min-width: 769px) {
+            .hamburger { display: none; }
+        }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="menu-container">
+        <div class="hamburger">☰</div>
+        <ul class="main-menu">
+            <!-- Только пункты, для которых будет динамическое меню, имеют data-menu -->
+            <li class="menu-item" data-menu="products"><a href="#">Продукты</a></li>
+            <li class="menu-item"><a href="#">Кибербезопасность</a></li>
+            <li class="menu-item"><a href="#">Сеть и CDN</a></li>
+            <li class="menu-item"><a href="#">Контакты</a></li>
+        </ul>
+        <!-- Единый контейнер для динамически заменяемого меню -->
+        <div class="dropdown-container" id="dropdown"></div>
+    </div>
+</nav>
+
+<script>
+    // Структура меню
+    const menuData = {
+        products: [
+            { title: "Вычисления и хранение (BaaS)", href: "#" },
+            { title: "Бизнес-приложения (SaaS)", href: "#" },
+            {
+                title: "Базы данных (DBaaS)",
+                submenu: [
+                    { title: "ML-платформа", href: "#" },
+                    { title: "BI-платформы", href: "#" },
+                    { title: "PostgreSQL", href: "#" }
+                ]
+            }
+        ]
+    };
+
+    class DynamicMenu {
+        constructor() {
+            this.dropdown = document.getElementById('dropdown');
+            this.currentMenuKey = null; // ключ текущего меню (либо 'products', либо '_current' для временного submenu)
+            this.navigationStack = []; // для отслеживания истории вложенности
+            this.isMobile = window.innerWidth <= 768;
+            this.init();
+        }
+
+        init() {
+            const hamburger = document.querySelector('.hamburger');
+            const mainMenu = document.querySelector('.main-menu');
+
+            hamburger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (mainMenu.style.display === 'block') {
+                    mainMenu.style.display = 'none';
+                    this.hideDropdown()
+                } else {
+                    mainMenu.style.display = 'block';
+                }
+            });
+
+            document.querySelectorAll('.menu-item[data-menu]').forEach(item => {
+                const menuKey = item.getAttribute('data-menu');
+                if (this.isMobile) {
+                    item.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.navigationStack = [];
+                        this.showMenu(menuKey);
+                    });
+                } else {
+                    item.addEventListener('mouseenter', () => {
+                        this.navigationStack = [];
+                        this.showMenu(menuKey);
+                    });
+                }
+            });
+
+            // Скрытие меню при клике вне области
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.menu-container')) {
+                    this.hideDropdown();
+                }
+            });
+
+            if (!this.isMobile) {
+                this.dropdown.addEventListener('mouseleave', () => {
+                    this.hideDropdown();
+                });
+            }
+        }
+
+        showMenu(menuKey) {
+            this.currentMenuKey = menuKey;
+            const items = menuKey === '_current' ? this.tempSubmenu : menuData[menuKey];
+            if (!items) return;
+
+            let html = '';
+            // Если мы входим во вложенное меню – добавляем кнопку "Назад"
+            if (this.navigationStack.length > 0) {
+                html += '<div class="back">← Назад</div>';
+            }
+            html += '<ul>';
+            items.forEach((item, index) => {
+                html += `<li data-index="${index}">${item.title}</li>`;
+            });
+            html += '</ul>';
+
+            this.dropdown.innerHTML = html;
+            this.dropdown.style.display = 'block';
+
+            const listItems = this.dropdown.querySelectorAll('li[data-index]');
+            listItems.forEach(li => {
+                const idx = parseInt(li.getAttribute('data-index'), 10);
+                const item = items[idx];
+
+                if (item.submenu) {
+                    const eventType = this.isMobile ? 'click' : 'mouseenter';
+                    li.addEventListener(eventType, (e) => {
+                        e.stopPropagation();
+                        this.navigationStack.push(this.currentMenuKey);
+                        this.tempSubmenu = item.submenu; // сохраняем временное submenu
+                        this.showMenu('_current');
+                    });
+                } else {
+                    li.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (item.href) {
+                            window.location.href = item.href;
+                        }
+                    });
+                }
+            });
+
+            const backBtn = this.dropdown.querySelector('.back');
+            if (backBtn) {
+                backBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (this.navigationStack.length > 0) {
+                        const prevMenuKey = this.navigationStack.pop();
+                        this.showMenu(prevMenuKey);
+                    }
+                });
+            }
+        }
+
+        hideDropdown() {
+            this.dropdown.style.display = 'none';
+        }
+    }
+
+    new DynamicMenu();
+</script>
+</body>
+</html>

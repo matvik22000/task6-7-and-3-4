@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JS-меню без модификации DOM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .menu-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .main-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .menu-item {
+            position: relative;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+
+        .menu-item > a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .submenu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            min-width: 250px;
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .submenu.active {
+            display: block;
+        }
+
+        .submenu-item {
+            padding: 0.5rem 1rem;
+        }
+
+        .submenu-item:hover {
+            background: #f1f1f1;
+        }
+
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+            }
+
+            .main-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            }
+
+            .main-menu.active {
+                display: flex;
+            }
+
+            .menu-item {
+                padding: 1rem;
+            }
+
+            .submenu {
+                position: static;
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="menu-container">
+        <div class="hamburger">☰</div>
+
+        <ul class="main-menu">
+            <li class="menu-item" data-submenu="products">
+                <a>Продукты</a>
+                <ul class="submenu" id="products">
+                    <li class="submenu-item"><a href="#">Вычисления и хранение (BaaS)</a></li>
+                    <li class="submenu-item"><a href="#">Бизнес-приложения (SaaS)</a></li>
+                    <li class="menu-item" data-submenu="dbaas">
+                        <a>Базы данных (DBaaS)</a>
+                        <ul class="submenu" id="dbaas">
+                            <li class="submenu-item"><a href="#">ML-платформа</a></li>
+                            <li class="submenu-item"><a href="#">BI-платформы</a></li>
+                            <li class="submenu-item"><a href="#">PostgreSQL</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li class="menu-item"><a href="#">Кибербезопасность</a></li>
+            <li class="menu-item"><a href="#">Сеть и CDN</a></li>
+            <li class="menu-item"><a href="#">Контакты</a></li>
+        </ul>
+    </div>
+</nav>
+
+<script>
+    class MenuController {
+        constructor() {
+            this.init();
+            this.activeSubmenu = null;
+            this.threshold = 768;
+        }
+
+        init() {
+            document.querySelectorAll('.menu-item[data-submenu]').forEach(item => {
+                this.addDesktopHandlers(item);
+                this.addMobileHandlers(item);
+            });
+
+            document.querySelector('.hamburger').addEventListener('click', () => {
+                document.querySelector('.main-menu').classList.toggle('active');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.menu-container')) {
+                    this.closeAllSubmenus();
+                    document.querySelector('.main-menu').classList.remove('active');
+                }
+            });
+        }
+
+        addDesktopHandlers(item) {
+            item.addEventListener('mouseenter', () => {
+                if (window.innerWidth > this.threshold) {
+                    this.openSubmenu(item.dataset.submenu);
+                }
+            });
+
+            item.addEventListener('mouseleave', () => {
+                if (window.innerWidth > this.threshold) {
+                    this.closeAllSubmenus();
+                }
+            });
+        }
+
+        addMobileHandlers(item) {
+            item.addEventListener('click', (e) => {
+                if (window.innerWidth <= this.threshold) {
+                    e.stopPropagation();
+                    const submenuId = item.dataset.submenu;
+                    if (this.activeSubmenu === submenuId) {
+                        this.closeAllSubmenus();
+                    } else {
+                        this.openSubmenu(submenuId);
+                    }
+                }
+            });
+        }
+
+        openSubmenu(id) {
+            const submenu = document.getElementById(id);
+            if (submenu) {
+                submenu.classList.add('active');
+                this.activeSubmenu = id;
+            }
+        }
+
+        closeAllSubmenus() {
+            document.querySelectorAll('.submenu.active').forEach(submenu => {
+                submenu.classList.remove('active');
+            });
+            this.activeSubmenu = null;
+        }
+    }
+
+    new MenuController();
+</script>
+</body>
+</html>

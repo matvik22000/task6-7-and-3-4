@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSS-only выпадающее меню</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            padding: 20px;
+        }
+
+        nav {
+            background: #f8f9fa;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .menu-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Десктопное меню */
+        .main-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .menu-item {
+            position: relative;
+            padding: 0.5rem 1rem;
+        }
+
+        .menu-item > a {
+            text-decoration: none;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .submenu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            min-width: 250px;
+            list-style: none;
+            padding: 1rem 0;
+        }
+
+        .submenu-item {
+            padding: 0.5rem 1rem;
+        }
+
+        .submenu-item:hover {
+            background: #f1f1f1;
+        }
+
+        .menu-item:hover > .submenu {
+            display: block;
+        }
+
+        /* Мобильное меню */
+        .menu-toggle {
+            display: none;
+        }
+
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            padding: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .hamburger {
+                display: block;
+            }
+
+            .main-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: white;
+                flex-direction: column;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            }
+
+            .menu-toggle:checked ~ .main-menu {
+                display: flex;
+            }
+
+            .menu-item {
+                padding: 1rem;
+            }
+
+            .submenu {
+                position: static;
+                box-shadow: none;
+                padding: 0;
+                display: none;
+            }
+
+            .menu-item:hover > .submenu {
+                display: none;
+            }
+
+            .menu-toggle:checked ~ .main-menu .submenu {
+                display: block;
+                padding-left: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<nav>
+    <div class="menu-container">
+        <input type="checkbox" id="menu-toggle" class="menu-toggle">
+        <label for="menu-toggle" class="hamburger">☰</label>
+
+        <ul class="main-menu">
+            <li class="menu-item">
+                <a href="#">Продукты</a>
+                <ul class="submenu">
+                    <li class="submenu-item"><a href="#">Вычисления и хранение (BaaS)</a></li>
+                    <li class="submenu-item"><a href="#">Бизнес-приложения (SaaS)</a></li>
+                    <li class="menu-item">
+                        <a href="#">Базы данных (DBaaS)</a>
+                        <ul class="submenu">
+                            <li class="submenu-item"><a href="#">ML-платформа</a></li>
+                            <li class="submenu-item"><a href="#">BI-платформы</a></li>
+                            <li class="submenu-item"><a href="#">PostgreSQL</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </li>
+            <li class="menu-item"><a href="#">Кибербезопасность</a></li>
+            <li class="menu-item"><a href="#">Сеть и CDN</a></li>
+            <li class="menu-item"><a href="#">Контакты</a></li>
+        </ul>
+    </div>
+</nav>
+</body>
+</html>
